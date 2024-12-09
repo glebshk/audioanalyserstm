@@ -70,7 +70,7 @@ void fftTesting()
 	  SignalParameters params;
 	  params.fFrequency = 10.0f;
 	  params.iPointAmount = FFT_SIZE;
-	  params.fSampleRate = 1000.0f;
+	  params.fSampleRate = 100.0f;
 	  params.fAmplitude = 2.5f;
 
 	  FFTTEST_STATUS eResult = generateSignal(T_SINE, &params);
