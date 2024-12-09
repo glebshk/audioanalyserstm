@@ -63,6 +63,12 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 /* USER CODE BEGIN PV */
 
+/*
+ * Hast du es geschafft?
+ * Status: NEIN!
+ *
+ */
+
 void fftTesting()
 {
 	  q15_t aOutputSignal[FFT_SIZE] = {};
