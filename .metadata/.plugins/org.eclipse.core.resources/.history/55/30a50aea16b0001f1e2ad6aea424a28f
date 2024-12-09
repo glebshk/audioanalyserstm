@@ -1,0 +1,8 @@
+#include "fft.h"
+
+arm_rfft_instance_q15 pRFFTInstance;
+
+int FFT_init()
+{
+
+}

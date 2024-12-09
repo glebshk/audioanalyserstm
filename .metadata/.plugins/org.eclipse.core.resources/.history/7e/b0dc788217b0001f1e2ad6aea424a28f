@@ -1,0 +1,23 @@
+#ifndef FFT_H
+#define FFT_H
+
+#include "arm_math.h"
+#include <stdbool.h>
+
+//#define PI 3.14159265358979
+
+enum FFT_STATUS
+{
+	OK = 0,
+
+	// Initialization errors:
+	INIT_FAILED
+
+	// Other
+};
+
+FFT_STATUS FFT_init(uint32_t uFFTSize);
+
+void floatToQ15();
+
+#endif // FFT_H

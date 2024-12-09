@@ -1,0 +1,49 @@
+#ifndef INC_FFT_FFT_TEST_H_
+#define INC_FFT_FFT_TEST_H_
+
+#include "fft.h"
+#include <stdbool.h>
+/*
+ * For the signal generation, you need:
+ * Formula sin(2*pi*f*k) / cos(2*pi*f*k)
+ * 1. The frequency (f)
+ * 2. The sample rate
+ * 3. the point amount
+ *
+ * The remaining members are
+ * 1. accounting information (e. g. for the programmer)
+ * 2. information about the data handling (who allocates the buffer, what is the buffer)
+ */
+typedef struct SignalParams
+{
+	float fFrequency = 0.f; // in Hertz
+	float fDuration = 0.f; // in milliseconds
+
+	unsigned int iSampleRate = 0; // in per second
+	unsigned int iPointAmount = 0; // in n
+	q15_t* pData = (q15_t*)0; // the actual signal data
+
+	bool bAllocatePointAmount = true; // The generate functions will allocate the buffers themselves
+} SignalParameters;
+
+enum FFT-TEST_STATUS
+{
+	OK = 0, NULLPOINTER
+};
+
+unsigned int calculatePointAmountFromDuration(SignalParameters* pParams);
+
+float calculateDurationFromPointAmount(SignalParameters* pParams);
+
+int generateSineSignal(SignalParameters* pParams);
+
+/*
+ * This function generates a cosine signal. You specify the frequency, the sample rate
+ * and the point amount to generate the signal.
+ * @param pParams: The parameters you provide in order to generate the signal.
+ * @return: error if non-zero
+ */
+int generateCosineSignal(SignalParameters* pParams);
+
+
+#endif /* INC_FFT_FFT_TEST_H_ */

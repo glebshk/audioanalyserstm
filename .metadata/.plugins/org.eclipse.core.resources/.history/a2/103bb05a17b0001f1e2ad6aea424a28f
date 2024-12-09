@@ -1,0 +1,18 @@
+#include "fft.h"
+
+arm_rfft_instance_q15 pRFFTInstance;
+bool bInitialized = false;
+uint32_t uFFTSize = 0;
+
+FFT_STATUS FFT_init()
+{
+	FFT_Status eReturnValue = OK;
+
+	if(arm_rfft_init_q15(&pRFFTInstance, 2, 0, 1) != ARM_MATH_SUCCESS)
+	{
+		eReturnValue = INIT_FAILED;
+	}
+
+	bInitialized = true;
+	return eReturnValue;
+}

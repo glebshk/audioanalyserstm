@@ -1,0 +1,19 @@
+#ifndef FFT_H
+#define FFT_H
+
+#include "arm_math.h"
+//#define PI 3.14159265358979
+
+enum FFT_STATUS
+{
+	OK = 0
+
+	// Initialization errors:
+
+
+	// Other
+};
+
+void FFT_init();
+
+#endif // FFT_H

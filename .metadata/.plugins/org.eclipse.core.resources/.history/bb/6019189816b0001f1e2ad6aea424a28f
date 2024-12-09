@@ -1,0 +1,8 @@
+#include "fft.h"
+
+
+
+void FFT_init()
+{
+
+}

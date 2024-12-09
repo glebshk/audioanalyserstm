@@ -1,0 +1,34 @@
+#include "fft.h"
+
+arm_rfft_instance_q15 pRFFTInstance;
+bool bInitialized = false;
+uint32_t uGlobalFFTSize = 0;
+
+FFT_STATUS FFT_init(uint32_t uFFTSize)
+{
+	FFT_STATUS eReturnValue = OK;
+
+	if(arm_rfft_init_q15(&pRFFTInstance, 2, 0, 1) != ARM_MATH_SUCCESS)
+	{
+		eReturnValue = INIT_FAILED;
+	}
+
+	uGlobalFFTSize = uFFTSize;
+	bInitialized = true;
+	return eReturnValue;
+}
+
+FFT_STATUS floatToQ15(const float* pSource, q15_t* pDestination)
+{
+	if(bInitialized == false) return NOT_INITIALIZED;
+	if(pSource == (float*) 0) return SOURCE_NULLPTR;
+	if(pDestination == (q15_t*) 0) return DESTINATION_NULLPTR;
+
+	arm_float_to_q15(pSource, pDestination, uGlobalFFTSize);
+	return OK;
+}
+
+FFT_STATUS fastFourierTransform(const q15_t* pSource, q15_t* pDestination)
+{
+	arm_rfft_q15(&pRFFTInstance, pSource, pDestination);
+}

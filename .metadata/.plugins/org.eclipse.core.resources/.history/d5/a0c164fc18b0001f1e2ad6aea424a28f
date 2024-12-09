@@ -1,0 +1,120 @@
+#include "fft_test.h"
+
+int checkStructure(SignalParameters* pParams)
+{
+	FFTTEST_STATUS eReturnValue = T_OK;
+
+	// The parameter is a nullptr!
+	if(pParams == (SignalParameters*)0)
+	{
+		eReturnValue = T_NULLPOINTER;
+	}
+
+//	// The buffer has not been prepared!
+//	else  if(pParams->pData == (q15_t*)0)
+//	{
+//		eReturnValue = T_UNPREPARED_BUFFER;
+//	}
+
+	// The buffer is non-zero. Therefore, it's already prepared. However, the user
+	// wants the function to allocate the buffer.
+	// Result: Potential memory leak
+//	else if(pParams->pData != (q15_t*)0 && pParams->bAllocatePointAmount == true)
+//	{
+//		eReturnValue = T_BUFFER_ALREADY_PREPARED;
+//	}
+
+	// The function does not the boundaries of the (existing) buffer
+	// nor the amount of elements to allocate
+	else if(pParams->iPointAmount == 0)
+	{
+		eReturnValue = T_UNKNOWN_POINTAMOUNT;
+	}
+
+	// A negative duration does not make sense
+	else if(pParams->fDuration <= 0)
+	{
+		eReturnValue = T_NEGATIVE_DURATION;
+	}
+
+	// A negative frequency is not allowed
+	else if(pParams->fFrequency <= 0)
+	{
+		eReturnValue = T_NEGATIVE_FREQUENCY;
+	}
+
+	// A negative sample rate does not make sense
+	else if (pParams->fSampleRate <= 0)
+	{
+		eReturnValue = T_NEGATIVE_SAMPLERATE;
+	}
+
+	// A negative amplitude does not make sense
+	else if(pParams->fAmplitude <= 0)
+	{
+		eReturnValue = T_NEGATIVE_AMPLITUDE;
+	}
+
+	return eReturnValue;
+}
+
+void cosineSignal(SignalParameters* pParams)
+{
+	// Calculate the signal
+	const float fConstant = 2 * PI * pParams->fFrequency * (1 / pParams->fSampleRate);
+
+	for(int i = 0; i < pParams->iPointAmount; ++i)
+	{
+		pParams->pRawData[i] = pParams->fAmplitude * cos(fConstant * i);
+	}
+}
+
+
+void sineSignal(SignalParameters* pParams)
+{
+	// Calculate the signal
+	const float fConstant = 2 * PI * pParams->fFrequency * (1 / pParams->fSampleRate);
+
+	for(int i = 0; i < pParams->iPointAmount; ++i)
+	{
+		pParams->pRawData[i] = pParams->fAmplitude * sin(fConstant * i);
+	}
+}
+
+// TODO: Error check realloc's
+FFTTEST_STATUS generateSignal(SIGNAL_TYPE eSignalType, SignalParams* pParams)
+{
+	// Check if the given structure is valid
+	FFTTEST_STATUS eReturnValue = checkStructure(pParams);
+	if(eReturnValue != T_OK) return eReturnValue;
+
+	realloc(pParams->pData, sizeof(float) * pParams->iPointAmount);
+
+	// Generate according signal
+	switch(eSignalType)
+	{
+	default:
+	case T_SINE:
+		sineSignal(pParams);
+		break;
+	case T_COSINE:
+		cosineSignal(pParams);
+		break;
+	}
+
+	realloc(pParams->pFFTReadyData, sizeof(q15_t) * pParams->iPointAmount);
+    floatToQ15(params.pRawData, params.pFFTReadyData);
+
+	return eReturnValue;
+}
+
+unsigned int calculatePointAmountFromDuration(SignalParameters* pParams)
+{
+	return 0;
+}
+
+float calculateDurationFromPointAmount(SignalParameters* pParams)
+{
+	return 0.f;
+}
+

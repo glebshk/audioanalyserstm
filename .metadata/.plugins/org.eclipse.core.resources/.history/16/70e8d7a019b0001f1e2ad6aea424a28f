@@ -1,0 +1,27 @@
+#ifndef FFT_H
+#define FFT_H
+
+#include "arm_math.h"
+#include <stdbool.h>
+
+//#define PI 3.14159265358979
+
+typedef enum FFT_STATUS
+{
+	// General
+	OK = 0, NOT_INITIALIZED,
+	SOURCE_NULLPTR, DESTINATION_NULLPTR
+
+	// Initialization errors:
+	INIT_FAILED
+
+	// Other
+} FFT_STATUS;
+
+FFT_STATUS FFT_init(uint32_t uFFTSize);
+
+FFT_STATUS floatToQ15(const float* pSource, q15_t* pDestination);
+
+FFT_STATUS fastFourierTransform(const q15_t* pSource, q15_t* pDestination);
+
+#endif // FFT_H

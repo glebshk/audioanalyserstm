@@ -1,0 +1,70 @@
+#ifndef INC_FFT_FFT_TEST_H_
+#define INC_FFT_FFT_TEST_H_
+
+#include "fft.h"
+#include <stdbool.h>
+#include <stdlib.h>
+
+/*
+ * The T_XX emphasises that this enums signals the status for the test
+ * functions, not the FFT functions in fft.h
+ */
+typedef enum FFTTEST_STATUS
+{
+	T_OK = 0, T_NULLPOINTER = 1, T_UNPREPAREDBUFFER = 2,
+	T_BUFFERALREADYPREPARED = 3, T_UNKNOWNPOINTAMOUNT = 4,
+	T_NEGATIVEDURATION = 5, T_NEGATIVEFREQUENCY = 6,
+	T_NEGATIVESAMPLERATE = 7, T_NEGATIVEAMPLITUDE = 8
+} FFTTEST_STATUS;
+
+/*
+ * For the signal generation, you need:
+ * Formula sin(2*pi*f*k*T_s) / cos(2*pi*f*k*T_s)
+ * 1. The frequency (f)
+ * 2. The sample rate
+ * 3. the point amount
+ *
+ * The remaining members are
+ * 1. accounting information (e. g. for the programmer)
+ * 2. information about the data handling (who allocates the buffer, what is the buffer)
+ */
+// TODO: Implement the use case for the duration!
+typedef struct SignalParams
+{
+	float fFrequency; // in Hertz
+	float fDuration; // in milliseconds
+	float fSampleRate; // in per second
+	float fAmplitude; // the amplitude of the signal!
+
+	unsigned int iPointAmount; // in n
+	float* pData; // the actual signal data
+
+	bool bAllocatePointAmount; // The generate functions will allocate the buffers themselves
+} SignalParameters;
+
+
+/**
+ *
+ */
+unsigned int calculatePointAmountFromDuration(SignalParameters* pParams);
+
+/**
+ *
+ */
+float calculateDurationFromPointAmount(SignalParameters* pParams);
+
+/**
+ *
+ */
+int generateSineSignal(SignalParameters* pParams);
+
+/*
+ * This function generates a cosine signal. You specify the frequency, the sample rate
+ * and the point amount to generate the signal.
+ * @param pParams: The parameters you provide in order to generate the signal.
+ * @return: error if non-zero
+ */
+int generateCosineSignal(SignalParameters* pParams);
+
+
+#endif /* INC_FFT_FFT_TEST_H_ */

@@ -1,0 +1,3 @@
+../Core/Src/FFT/fft.c:7:12:FFT_init	2
+../Core/Src/FFT/fft.c:22:12:floatToQ15	4
+../Core/Src/FFT/fft.c:32:12:fastFourierTransform	4

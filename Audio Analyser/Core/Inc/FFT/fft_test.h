@@ -1,0 +1,56 @@
+#ifndef INC_FFT_FFT_TEST_H_
+#define INC_FFT_FFT_TEST_H_
+
+#include "fft.h"
+#include <stdlib.h>
+#include <math.h>
+
+/*
+ * The T_XX emphasises that this enums signals the status for the test
+ * functions, not the FFT functions in fft.h
+ */
+typedef enum FFTTEST_STATUS
+{
+	T_OK = 0, T_NULLPOINTER = 1, T_UNPREPARED_BUFFER = 2,
+	T_BUFFER_ALREADY_PREPARED = 3, T_UNKNOWN_POINTAMOUNT = 4,
+	T_NEGATIVE_DURATION = 5, T_NEGATIVE_FREQUENCY = 6,
+	T_NEGATIVE_SAMPLERATE = 7, T_NEGATIVE_AMPLITUDE = 8,
+	T_MEMORY_ALLOCATION_ERROR = 0
+} FFTTEST_STATUS;
+
+typedef enum SIGNAL_TYPE
+{
+	T_SINE = 0, T_COSINE = 1
+} SIGNAL_TYPE;
+
+
+/*
+ * For the signal generation, you need:
+ * Formula sin(2*pi*f*k*T_s) / cos(2*pi*f*k*T_s)
+ * 1. The frequency (f)
+ * 2. The sample rate
+ * 3. the point amount
+ *
+ * The remaining members are
+ * 1. accounting information (e. g. for the programmer)
+ * 2. information about the data handling (who allocates the buffer, what is the buffer)
+ * IMPORTANT: DO NOT ALLOCATE the data yourself. The functions do it themselves!
+ */
+// TODO: Implement the use case for the duration!
+typedef struct SignalParams
+{
+	float fFrequency; // in Hertz
+	float fDuration; // in milliseconds
+	float fSampleRate; // in per second
+	float fAmplitude; // the amplitude of the signal!
+
+	unsigned int iPointAmount; // in n
+	float* pRawData; // the actual generated signal data
+	q15_t* pFFTReadyData; // the converted signal data, ready for the FFT
+
+} SignalParameters;
+
+
+FFTTEST_STATUS generateSignal(SIGNAL_TYPE eSignalType, SignalParameters* pParams);
+
+#endif /* INC_FFT_FFT_TEST_H_ */

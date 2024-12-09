@@ -1,0 +1,7 @@
+#ifndef FFT_H
+#define FFT_H
+
+#include "arm_math.h"
+#define PI 3.14159265358979
+
+#endif // FFT_H
