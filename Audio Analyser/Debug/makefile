@@ -14,6 +14,7 @@ RM := rm -rf
 -include Core/Src/FFT/subdir.mk
 -include Core/Src/Display/subdir.mk
 -include Core/Src/DSP/subdir.mk
+-include Core/Src/Buffer/subdir.mk
 -include Core/Src/subdir.mk
 -include objects.mk
 
@@ -63,8 +64,8 @@ all: main-build
 main-build: Audio\ Analyser.elf secondary-outputs
 
 # Tool invocations
-Audio\ Analyser.elf Audio\ Analyser.map: $(OBJS) $(USER_OBJS) C:\Users\Fabrice\ Jandt\source\repos\audio-analyser\Audio\ Analyser\STM32F429ZITX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Audio Analyser.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\Fabrice Jandt\source\repos\audio-analyser\Audio Analyser\STM32F429ZITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Audio Analyser.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Audio\ Analyser.elf Audio\ Analyser.map: $(OBJS) $(USER_OBJS) C:\Users\Fabrice\ Jandt\git\audio-analyser\Audio\ Analyser\STM32F429ZITX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Audio Analyser.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\Fabrice Jandt\git\audio-analyser\Audio Analyser\STM32F429ZITX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Audio Analyser.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

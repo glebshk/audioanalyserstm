@@ -1,0 +1,5 @@
+../Core/Src/Display/display.c:6:6:drawText	56	static
+../Core/Src/Display/display.c:37:6:drawCoordinateSystem	16	static
+../Core/Src/Display/display.c:44:6:drawInit	8	static
+../Core/Src/Display/display.c:54:6:drawData	88	static
+../Core/Src/Display/display.c:99:6:draw	16	static

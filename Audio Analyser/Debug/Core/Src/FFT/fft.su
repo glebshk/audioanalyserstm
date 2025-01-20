@@ -1,3 +1,4 @@
 ../Core/Src/FFT/fft.c:7:12:FFT_init	24	static
-../Core/Src/FFT/fft.c:22:12:floatToQ15	16	static
-../Core/Src/FFT/fft.c:32:12:fastFourierTransform	16	static
+../Core/Src/FFT/fft.c:28:12:floatToQ31	16	static
+../Core/Src/FFT/fft.c:38:12:fastFourierTransform	16	static
+../Core/Src/FFT/fft.c:48:12:fft_magnitude_f32	16	static

@@ -81,6 +81,30 @@ void sineSignal(SignalParameters* pParams)
 	}
 }
 
+// rect function
+void rectSignal(SignalParameters* pParams, int n)
+{
+	// Calculate the signal
+}
+
+// si-function ( sin(pi*x)/(pi*x) )
+void siSignal(SignalParameters* pParam, int n)
+{
+	// Calculate the signal
+}
+
+// triangle signal
+void triSignal(SignalParameters* pParams, int n)
+{
+
+}
+
+// Saw tooth (Sägezahn) signal
+void sawToothSignal(SignalParameters* pParams, int n)
+{
+	// 1/(pi*k) Koeffizient
+}
+
 // TODO: Error check realloc's
 FFTTEST_STATUS generateSignal(SIGNAL_TYPE eSignalType, SignalParameters* pParams)
 {
@@ -88,9 +112,15 @@ FFTTEST_STATUS generateSignal(SIGNAL_TYPE eSignalType, SignalParameters* pParams
 	FFTTEST_STATUS eReturnValue = checkStructure(pParams);
 	if(eReturnValue != T_OK) return eReturnValue;
 
+/*
+ * Only for the heap approach - now stack approach:
 	pParams->pRawData = realloc(pParams->pRawData, sizeof(float) * pParams->iPointAmount);
 	if(pParams->pRawData == (float*) 0)
 		return T_MEMORY_ALLOCATION_ERROR;
+*/
+
+	// I do not need to multiply by FFT_SIZE because it's an array and sizeof already calculates that!
+	memset(pParams->pRawData, 0, sizeof(__typeof(pParams->pRawData)));
 
 	// Generate according signal
 	switch(eSignalType)
@@ -104,11 +134,15 @@ FFTTEST_STATUS generateSignal(SIGNAL_TYPE eSignalType, SignalParameters* pParams
 		break;
 	}
 
+/*
+ * Only for the heap approach - now stack approach:
 	pParams->pFFTReadyData = realloc(pParams->pFFTReadyData, sizeof(q15_t) * pParams->iPointAmount);
     if(pParams->pFFTReadyData == (q15_t*) 0)
     	return T_MEMORY_ALLOCATION_ERROR;
 
-	floatToQ15(pParams->pRawData, pParams->pFFTReadyData);
+*/
+	memset(pParams->pFFTReadyData, 0, sizeof(__typeof(pParams->pFFTReadyData)));
+	floatToQ31(pParams->pRawData, pParams->pFFTReadyData);
 
 
 	return eReturnValue;

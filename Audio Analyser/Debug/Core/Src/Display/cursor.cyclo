@@ -1,0 +1,4 @@
+../Core/Src/Display/cursor.c:16:6:changeCursorMode	1
+../Core/Src/Display/cursor.c:21:6:moveCursor	7
+../Core/Src/Display/cursor.c:72:10:getScrolledX	1
+../Core/Src/Display/cursor.c:77:10:getScrolledY	1

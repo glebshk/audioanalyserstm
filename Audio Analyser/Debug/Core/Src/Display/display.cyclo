@@ -1,0 +1,5 @@
+../Core/Src/Display/display.c:6:6:drawText	2
+../Core/Src/Display/display.c:37:6:drawCoordinateSystem	1
+../Core/Src/Display/display.c:44:6:drawInit	1
+../Core/Src/Display/display.c:54:6:drawData	3
+../Core/Src/Display/display.c:99:6:draw	1

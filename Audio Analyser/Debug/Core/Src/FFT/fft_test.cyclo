@@ -1,6 +1,8 @@
 ../Core/Src/FFT/fft_test.c:3:5:checkStructure	6
 ../Core/Src/FFT/fft_test.c:61:6:cosineSignal	2
 ../Core/Src/FFT/fft_test.c:73:6:sineSignal	2
-../Core/Src/FFT/fft_test.c:85:16:generateSignal	5
-../Core/Src/FFT/fft_test.c:117:14:calculatePointAmountFromDuration	1
-../Core/Src/FFT/fft_test.c:122:7:calculateDurationFromPointAmount	1
+../Core/Src/FFT/fft_test.c:85:6:rectSignal	1
+../Core/Src/FFT/fft_test.c:91:6:siSignal	1
+../Core/Src/FFT/fft_test.c:97:6:triSignal	1
+../Core/Src/FFT/fft_test.c:103:6:sawToothSignal	1
+../Core/Src/FFT/fft_test.c:109:16:generateSignal	3

@@ -24,9 +24,11 @@
 /* USER CODE BEGIN Includes */
 
 #include <stdio.h>
-#include "ST7735.h"
+#include <string.h> // memcpy
+#include <stdbool.h>
+#include "display.h"
+#include "Buffer/buffer.h"
 #include "fft.h"
-#include "fft_test.h"
 
 /* USER CODE END Includes */
 
@@ -38,12 +40,11 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-#define FFT_SIZE 256
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+
 
 /* USER CODE END PM */
 
@@ -55,7 +56,12 @@ ETH_DMADescTypeDef  DMATxDscrTab[ETH_TX_DESC_CNT]; /* Ethernet Tx DMA Descriptor
 
 ETH_HandleTypeDef heth;
 
+I2S_HandleTypeDef hi2s2;
+DMA_HandleTypeDef hdma_spi2_rx;
+
 SPI_HandleTypeDef hspi1;
+
+TIM_HandleTypeDef htim2;
 
 UART_HandleTypeDef huart3;
 
@@ -63,42 +69,74 @@ PCD_HandleTypeDef hpcd_USB_OTG_FS;
 
 /* USER CODE BEGIN PV */
 
-/*
- * Hast du es geschafft?
- * Status: NEIN!
- *
- */
+extern Buffer aGlobalBuffer;
+float aAudioBuffer2[FFT_SIZE] = {};
 
-void fftTesting()
-{
-	  q15_t aOutputSignal[FFT_SIZE] = {};
+bool bDataReady = false;
+bool bRefreshDisplay = false;
 
-	  SignalParameters params;
-	  params.fFrequency = 10.0f;
-	  params.iPointAmount = FFT_SIZE;
-	  params.fSampleRate = 100.0f;
-	  params.fAmplitude = 2.5f;
+int iCallbackState = 0;
+arm_rfft_fast_instance_f32 pRFFTInstance2;
 
-	  FFTTEST_STATUS eResult = generateSignal(T_SINE, &params);
 
-	  fastFourierTransform(params.pFFTReadyData, aOutputSignal);
-}
+char pszBuffer[256] = {};
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_ETH_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_USB_OTG_FS_PCD_Init(void);
 static void MX_SPI1_Init(void);
+static void MX_I2S2_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+void displayInit()
+{
+	const char init[] = "Starting the init process!\r\n";
+	HAL_UART_Transmit(&huart3, (uint8_t*)init, sizeof(init)-1, HAL_MAX_DELAY);
+
+	ST7735_Init();
+
+    const char ready[] = "Ready!\r\n";
+    HAL_UART_Transmit(&huart3, (uint8_t*)ready, sizeof(ready)-1, HAL_MAX_DELAY);
+}
+
+void HAL_I2S_RxHalfCpltCallback(I2S_HandleTypeDef* hi2s)
+{
+	iCallbackState = 1;
+}
+
+void HAL_I2S_RxCpltCallback(I2S_HandleTypeDef* hi2s)
+{
+	iCallbackState = 2;
+}
+
+void fftPipe()
+{
+	arm_rfft_fast_f32(&pRFFTInstance2, aAudioBuffer2, aGlobalBuffer.aFFTBuffer, 0);
+	arm_cmplx_mag_f32(aGlobalBuffer.aFFTBuffer, aGlobalBuffer.aMagnitude, FFT_SIZE);
+
+	bDataReady = true;
+	iCallbackState = 0;
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    if (htim->Instance == TIM2)
+    {
+    	bRefreshDisplay = true;
+    }
+}
 
 /* USER CODE END 0 */
 
@@ -131,50 +169,120 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_ETH_Init();
   MX_USART3_UART_Init();
   MX_USB_OTG_FS_PCD_Init();
   MX_SPI1_Init();
+  MX_I2S2_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+
+  HAL_TIM_Base_Start_IT(&htim2);
+
+  if (HAL_I2S_Receive_DMA(&hi2s2, (uint16_t *)aGlobalBuffer.aMicSamples, AUDIO_BUFFER_SIZE) != HAL_OK) {
+      // Handle the error
+	  const char noDMA[] = "Could not set up the DMA correctly!\r\n";
+	  HAL_UART_Transmit(&huart3, (uint8_t*)noDMA, strlen(noDMA), HAL_MAX_DELAY);
+      Error_Handler();
+  }
+
+  const char DMA[] = "The DMA has been set up!\r\n";
+  HAL_UART_Transmit(&huart3, (uint8_t*)DMA, strlen(DMA), HAL_MAX_DELAY);
 
   /*
    * DC: PF13
    * RESET: PE10
    */
 
+  if(arm_rfft_fast_init_f32(&pRFFTInstance2, FFT_SIZE) != ARM_MATH_SUCCESS)
+  {
+	  puts("NO SUCCESS");
+  }
+  else
+  {
+	  puts("SUCCESS");
+  }
 
-  FFT_init(FFT_SIZE);
-  ST7735_Init(0);
+  displayInit();
 
-  fillScreen(BLACK);
-  testAll();
-  HAL_Delay(1000);
+  memset(aAudioBuffer2, 0, sizeof(aAudioBuffer2));
 
+  drawInit();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  ST7735_SetRotation(0);
-	    ST7735_WriteString(0, 0, "HELLO", Font_11x18, RED,BLACK);
-	    HAL_Delay(1000);
-	    fillScreen(BLACK);
+	// Solange ich kein neues Datenframe verarbeiten kann, warte ich
+	// darauf, dass ich es kann
 
-	    ST7735_SetRotation(1);
-	    ST7735_WriteString(0, 0, "WORLD", Font_11x18, GREEN,BLACK);
-	    HAL_Delay(1000);
-	    fillScreen(BLACK);
+	if (iCallbackState == 2)
+	{
+		int offset = 0;
 
-	    ST7735_SetRotation(2);
-	    ST7735_WriteString(0, 0, "FROM", Font_11x18, BLUE,BLACK);
-	    HAL_Delay(1000);
-	    fillScreen(BLACK);
+		// find offset
+		for(;offset < FFT_SIZE; ++offset)
+		{
+			if(aGlobalBuffer.aMicSamples[offset] == 0 || aGlobalBuffer.aMicSamples[offset + 1] == 0)
+			{
+				continue;
+			}
+			else
+			{
+				break;
+			}
+		}
 
-	    ST7735_SetRotation(3);
-	    ST7735_WriteString(0, 0, "ControllersTech", Font_16x26, YELLOW,BLACK);
-	    HAL_Delay(1000);
-	    fillScreen(BLACK);
+		memset(aAudioBuffer2, 0, sizeof(aAudioBuffer2));
+
+		//for(int i = FFT_SIZE/2; i<FFT_SIZE; i++)
+		for(int i = 0; i < FFT_SIZE; i++)
+		{
+			// Eigene Lösung:
+			if(aGlobalBuffer.aMicSamples[i] == 0) continue;
+			aAudioBuffer2[i] = (float)aGlobalBuffer.aMicSamples[i+offset];
+		}
+
+		fftPipe();
+
+		if(!bDataReady)
+			HAL_I2S_Receive_DMA(&hi2s2, (uint16_t *)aGlobalBuffer.aMicSamples, AUDIO_BUFFER_SIZE);
+	}
+
+	if(bDataReady)
+	{
+		 // Logarithmische Skala & Filter
+		 for(int i = 0; i < FFT_SIZE/2; i++)
+		 {
+			 if(aGlobalBuffer.aMagnitude[i] == 0) continue;
+			 if(aGlobalBuffer.aMagnitude[i] < 0.000001f) continue;
+
+			 aGlobalBuffer.aMagnitude[i] = 20*log10f(aGlobalBuffer.aMagnitude[i]);
+
+		 	 // Weighing down of noise
+		 	 if (aGlobalBuffer.aMagnitude[i] < 100)
+		 	 {
+			 	 aGlobalBuffer.aMagnitude[i] *= 0.65;
+		 	 }
+
+		 	 // Negative Amplituden sind nicht erlaubt!
+		 	 if(aGlobalBuffer.aMagnitude[i] < 0.f)
+		 	 {
+		 		 aGlobalBuffer.aMagnitude[i] = 0.f;
+		 	 }
+		 }
+
+	}
+
+	if(bRefreshDisplay && bDataReady)
+	{
+		draw();
+		bRefreshDisplay = false;
+		bDataReady = false;
+	    HAL_I2S_Receive_DMA(&hi2s2, aGlobalBuffer.aMicSamples, AUDIO_BUFFER_SIZE);
+	}
 
     /* USER CODE END WHILE */
 
@@ -278,6 +386,40 @@ static void MX_ETH_Init(void)
 }
 
 /**
+  * @brief I2S2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2S2_Init(void)
+{
+
+  /* USER CODE BEGIN I2S2_Init 0 */
+
+  /* USER CODE END I2S2_Init 0 */
+
+  /* USER CODE BEGIN I2S2_Init 1 */
+
+  /* USER CODE END I2S2_Init 1 */
+  hi2s2.Instance = SPI2;
+  hi2s2.Init.Mode = I2S_MODE_MASTER_RX;
+  hi2s2.Init.Standard = I2S_STANDARD_PHILIPS;
+  hi2s2.Init.DataFormat = I2S_DATAFORMAT_16B_EXTENDED;
+  hi2s2.Init.MCLKOutput = I2S_MCLKOUTPUT_DISABLE;
+  hi2s2.Init.AudioFreq = I2S_AUDIOFREQ_32K;
+  hi2s2.Init.CPOL = I2S_CPOL_LOW;
+  hi2s2.Init.ClockSource = I2S_CLOCK_PLL;
+  hi2s2.Init.FullDuplexMode = I2S_FULLDUPLEXMODE_DISABLE;
+  if (HAL_I2S_Init(&hi2s2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2S2_Init 2 */
+
+  /* USER CODE END I2S2_Init 2 */
+
+}
+
+/**
   * @brief SPI1 Initialization Function
   * @param None
   * @retval None
@@ -312,6 +454,51 @@ static void MX_SPI1_Init(void)
   /* USER CODE BEGIN SPI1_Init 2 */
 
   /* USER CODE END SPI1_Init 2 */
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 8999;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 333;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
 
 }
 
@@ -384,6 +571,22 @@ static void MX_USB_OTG_FS_PCD_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Stream3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -428,6 +631,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : LRCL_microphone_Pin */
+  GPIO_InitStruct.Pin = LRCL_microphone_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(LRCL_microphone_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PF13 */
   GPIO_InitStruct.Pin = GPIO_PIN_13;
